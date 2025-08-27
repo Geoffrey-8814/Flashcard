@@ -52,7 +52,7 @@ if "show_meaning" not in st.session_state:
 
 # ========== 统计完成度 ==========
 total = len(subset)
-done = sum(1 for sid in st.session_state.remaining if st.session_state.progress.get(sid, 0) >= 3)
+done = total-len(st.session_state.remaining)
 st.progress(done / total if total > 0 else 0)
 st.caption(f"完成度: {done}/{total}")
 
@@ -61,14 +61,17 @@ def moveToNext():
             placeholder = st.empty()
             placeholder.markdown("⏭ 正在切换下一个单词...")
             st.session_state.show_meaning = False
-            time.sleep(0.5)
+            time.sleep(0.1)
             placeholder.empty()
             st.rerun()
 
 # ========== 主逻辑 ==========
 if len(st.session_state.remaining) == 0:
     st.success("🎉 恭喜，范围内的单词都掌握了！")
+    st.stop()  # 提前结束
 else:
+    if st.session_state.current_pos >= len(st.session_state.remaining):
+        st.session_state.current_pos = 0
     current_id = st.session_state.remaining[st.session_state.current_pos]
     row = subset[subset["序号"] == current_id].iloc[0]
     st.header(row["单词"])
