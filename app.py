@@ -2,6 +2,8 @@ import streamlit as st
 import pdfplumber
 import pandas as pd
 import time
+import tempfile
+from gtts import gTTS
 
 # ========== PDF 解析 ==========
 @st.cache_data
@@ -25,6 +27,12 @@ def load_pdf(path):
                 words.append({"序号": idx, "单词": w, "中文": cn, "英文": en})
     return pd.DataFrame(words).drop_duplicates(["序号"]).sort_values("序号").reset_index(drop=True)
 
+
+def speak_word(word):
+    tts = gTTS(text=word, lang="en", tld="com")  # com 默认就是美式
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+    tts.save(tmp.name)
+    return tmp.name
 
 path = "Barron词汇"
 
@@ -74,7 +82,12 @@ else:
         st.session_state.current_pos = 0
     current_id = st.session_state.remaining[st.session_state.current_pos]
     row = subset[subset["序号"] == current_id].iloc[0]
-    st.header(row["单词"])
+    word = row["单词"]
+    st.header(word)
+    
+    if st.button("🔊 发音"):
+        mp3_file = speak_word(word)
+        st.audio(mp3_file, format="audio/mp3")
 
     # 当前熟练度
     st.write(f"当前熟练度：{st.session_state.progress.get(current_id,0)}/3")
